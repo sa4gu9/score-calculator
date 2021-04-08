@@ -8,7 +8,7 @@ winstrike = []
 datas = ""
 bonus = []
 
-scoreminusratio = [1.00, 0.5, 0.3, 0.25, 0.2, 0.15, 0.15]
+scoreminusratio = [1.00, 0.5, 0.3, 0.25, 0.2, 0.15, 0.15, 0.13, 0.12]
 
 sup = []
 sdown = []
@@ -18,6 +18,9 @@ team = []
 
 fulldata = {}
 
+retirebool = False
+killbool = False
+
 print("데이터 이름을 입력하세요.")
 filename = input() + ".json"
 
@@ -25,8 +28,27 @@ if os.path.isfile(filename):
     with open(filename, "r", encoding="UTF-8") as jsonfile:
         fulldata = json.load(jsonfile)
 
-print("참가인원을 입력하세요>>")
-people = int(input())
+people = 0
+maxpeople = len(scoreminusratio) + 1
+
+
+while people < 2 or people > len(scoreminusratio):
+    print(f"참가인원(2명~{maxpeople}명)을 입력하세요>>")
+    people = int(input())
+
+print("공동 최하위(리타이어)가 필요하다면 retire를 입력해주세요.")
+inputdata = input()
+if inputdata == "retire":
+    retirebool = True
+    print("리타이어 모드를 적용합니다.")
+    retire = 0
+
+print("킬포함 점수를 측정하고 싶다면 kill을 입력해주세요.")
+inputdata = input()
+if inputdata == "kill":
+    killbool = True
+    print("킬 모드를 적용합니다.")
+
 for i in range(people):
     print("참가 할 사람의 닉네임을 입력하세요>>")
     nickname = input()
@@ -47,13 +69,15 @@ for i in range(people):
 print("경기 수를 입력해주세요>>")
 track = int(input())
 
+
 for i in range(track):
-    print("리타이어 수를 입력하세요>>")
-    retire = int(input())
+    if retirebool:
+        print("리타이어 수를 입력하세요>>")
+        retire = int(input())
     for j in range(people):
-        print(f"{nick[j]}의 등수는? 리타는 9로 입력>>")
+        print(f"{nick[j]}의 등수는? 리타는 {maxpeople+1}로 입력>>")
         rank[j] = int(input())
-        if rank[j] == 9:
+        if rank[j] == maxpeople + 1:
             rank[j] = people - retire + 1
 
     for j in range(people):
@@ -89,6 +113,9 @@ for i in range(track):
             else:
                 sdown[j] = 1 - 0.15 * math.floor(a - score[j])
 
+            if sdown[j] < 0:
+                sdown[j] = 0
+
         if win != 0:
             if score[j] > b:
                 sup[j] = 1 - 0.15 * math.floor(score[j] - b)
@@ -119,4 +146,4 @@ for i in range(people):
 
 
 with open(filename, "w", encoding="UTF-8") as jsonfile:
-    json.dump(fulldata, jsonfile)
+    json.dump(fulldata, jsonfile, indent=4)
