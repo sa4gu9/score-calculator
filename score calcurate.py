@@ -41,6 +41,8 @@ filename = input() + ".json"
 print("직접 결과를 입력하려면 hand를, 구글 스프레드시트를 이용하려면 google을 입력해주세요.")
 inputtext = input()
 
+includekillscore = None
+
 if inputtext == "hand":
     pass
 elif inputtext == "google":
@@ -62,6 +64,13 @@ elif inputtext == "google":
     sheetname = input()
 
     sheet = gc.open(spreadsheet_name).worksheet(sheetname)
+
+    scoresheet = gc.open(spreadsheet_name).worksheet("킬점수반영시 점수표")
+    includekillscore = scoresheet.range("B2:J11")
+
+    print(includekillscore)
+
+
 else:
     exit()
 
