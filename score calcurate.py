@@ -40,7 +40,7 @@ print("공동 최하위(리타이어)가 필요하다면 retire를 입력해주�
 inputdata = input()
 if inputdata == "retire":
     retirebool = True
-    print("리타이어 모드를 적용합니다.")
+    print(" 리타이어 모드를 적용합니다.")
     retire = 0
 
 print("킬포함 점수를 측정하고 싶다면 kill을 입력해주세요.")
@@ -113,14 +113,17 @@ for i in range(track):
             else:
                 sdown[j] = 1 - 0.15 * math.floor(a - score[j])
 
-            if sdown[j] < 0:
-                sdown[j] = 0
+            print(sdown)
 
         if win != 0:
             if score[j] > b:
-                sup[j] = 1 - 0.15 * math.floor(score[j] - b)
+                sup[j] = 1 - 0.15 * math.floor(score[j] - b) * (
+                    1 - lose * scoreminusratio[people - 2]
+                )
             else:
-                sup[j] = 1 + 0.15 * math.floor(b - score[j])
+                sup[j] = 1 + 0.15 * math.floor(b - score[j]) * (
+                    1 - lose * scoreminusratio[people - 2]
+                )
 
     for j in range(people):
         bonus[j] = 1.0
@@ -132,7 +135,10 @@ for i in range(track):
                     temp = temp - 1
             sup[j] = sup[j] * bonus[j]
 
-        sdown[j] = sdown[j] * (1 - lose * scoreminusratio[people - 2])
+        sdown[j] = sdown[j]
+
+        if sdown[j] < 0:
+            sdown[j] = 0
         score[j] = score[j] + sup[j]
         score[j] = score[j] - sdown[j]
         if score[j] < 0:
