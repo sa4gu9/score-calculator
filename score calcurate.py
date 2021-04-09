@@ -20,6 +20,8 @@ who = []
 rank = []
 team = []
 kill = []
+tempscore = []
+temprank = []
 
 fulldata = {}
 
@@ -67,8 +69,6 @@ elif inputtext == "google":
 
     scoresheet = gc.open(spreadsheet_name).worksheet("킬점수반영시 점수표")
     includekillscore = scoresheet.range("B2:J11")
-
-    print(includekillscore)
 
 
 else:
@@ -127,6 +127,8 @@ for i in range(people):
     sup.append(0)
     bonus.append(0)
     kill.append(0)
+    tempscore.append(0)
+    temprank.append(0)
 
 
 for i in range(track):
@@ -137,17 +139,24 @@ for i in range(track):
 
     if spreadbool:
         rowvalues = sheet.row_values(4 + i)
-    print(rowvalues)
 
     for j in range(people):
+        tempscore[j] = 0
         if not spreadbool:
             print(f"{nick[j]}의 등수는? 리타는 {maxpeople+1}로 입력>>")
             rank[j] = int(input())
             if rank[j] == maxpeople + 1:
                 rank[j] = people - retire + 1
+
         else:
-            print([i, j])
             rank[j] = int(rowvalues[1 + 2 * j])
+
+            if killbool:
+                temprank[j] = rank[j]
+                tempindex = 9 * (rank[j] - 1) + (people - 2)
+                temps = int(includekillscore[tempindex].value)
+                print(temps)
+                tempscore[j] += temps
 
         if killbool:
             if not spreadbool:
@@ -155,6 +164,32 @@ for i in range(track):
                 kill[j] = int(input())
             else:
                 kill[j] = int(rowvalues[2 + 2 * j])
+
+            for kk in range(kill[j]):
+                if kk == 0:
+                    tempscore[j] += 4
+                elif kk == 1:
+                    tempscore[j] += 2
+                else:
+                    tempscore[j] += 1
+
+    print(tempscore)
+
+    for j in range(people):
+        index = -1
+        rank[j] = 1
+
+        for ss in tempscore:
+            index += 1
+            if index == j:
+                continue
+            if tempscore[j] < ss:
+                rank[j] += 1
+            elif tempscore[j] == ss:
+                if temprank[j] > temprank[index]:
+                    rank[j] += 1
+
+    print(rank)
 
     for j in range(people):
         a = 0.0
@@ -200,6 +235,7 @@ for i in range(track):
                 )
 
     print(sup)
+    print(sdown)
 
     for j in range(people):
         bonus[j] = 1.0
