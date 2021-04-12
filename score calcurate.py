@@ -1,6 +1,7 @@
 import math
 import json
 import os
+import time
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -45,8 +46,7 @@ if inputdata == "kill":
 
 
 print("데이터 이름을 입력하세요.")
-# filename = input() + ".json"
-filename = "gnkkart2.json"
+filename = input() + ".json"
 
 print("직접 결과를 입력하려면 hand를, 구글 스프레드시트를 이용하려면 google을 입력해주세요.")
 # inputtext = input()
@@ -96,6 +96,7 @@ people = 0
 maxpeople = len(scoreminusratio) + 1
 
 for sheetindex in range(sheetamount):
+    time.sleep(30)
     nick.clear()
     score.clear()
     winstrike.clear()
@@ -118,10 +119,9 @@ for sheetindex in range(sheetamount):
         track = int(input())
     else:
         sheet = gc.open(spreadsheet_name).worksheet(sheetname[sheetindex])
-        people = int(sheet.cell(1, 2).value)
-        track = int(sheet.cell(1, 4).value)
-
-    rowvalue = sheet.row_values(2)
+        sheetvalue = sheet.get_all_values()
+        people = int(sheetvalue[0][1])
+        track = int(sheetvalue[0][3])
 
     for i in range(people):
         nickname = None
@@ -130,11 +130,10 @@ for sheetindex in range(sheetamount):
             nickname = input()
             nick.append(nickname)
         else:
-            nickname = rowvalue[1 + i * 2].value
+            nickname = sheetvalue[1][1 + i * 2]
             nick.append(nickname)
 
         if nickname in fulldata.keys():
-            print(fulldata[nickname])
             score.append(fulldata[nickname]["score"])
             winstrike.append(fulldata[nickname]["winstrike"])
 
@@ -150,11 +149,8 @@ for sheetindex in range(sheetamount):
         temprank.append(0)
 
     for i in range(track):
-        retire = 0
-        rowvalues = None
 
-        if spreadbool:
-            rowvalues = sheet.row_values(4 + i)
+        retire = 0
 
         if retirebool:
             if not spreadbool:
@@ -170,7 +166,7 @@ for sheetindex in range(sheetamount):
                     rank[j] = people - retire + 1
 
             else:
-                rank[j] = int(rowvalues[1 + 2 * j])
+                rank[j] = int(sheetvalue[3 + i][1 + j * 2])
                 temprank[j] = rank[j]
 
                 if killbool:
@@ -184,7 +180,7 @@ for sheetindex in range(sheetamount):
                     print(f"{nick[j]}의 킬 수는?")
                     kill[j] = int(input())
                 else:
-                    kill[j] = int(rowvalues[2 + 2 * j])
+                    kill[j] = int(sheetvalue[3 + i][2 + j * 2])
 
                 for kk in range(kill[j]):
                     if kk == 0:
