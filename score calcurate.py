@@ -22,14 +22,16 @@ rank = []
 team = []
 kill = []
 tempscore = []
+sumscore = []
 temprank = []
 
 fulldata = {}
 
 retirebool = False
-killbool = False
+killMode = False
 
 spreadbool = False
+sumbool = False
 
 scope = [
     "https://spreadsheets.google.com/feeds",
@@ -38,12 +40,20 @@ scope = [
 sheetname = []
 sheet = None
 
+
 print("킬포함 점수를 측정하고 싶다면 kill을 입력해주세요.")
 inputdata = input()
+
+
 if inputdata == "kill":
-    killbool = True
+    killMode = True
     print("킬 모드를 적용합니다.")
 
+
+inputdata = input("누적모드를 적용하려면 sum을 입력해주세요.")
+if inputdata == "sum":
+    sumbool = True
+    print("누적모드를 적용합니다.")
 
 print("데이터 이름을 입력하세요.")
 filename = input() + ".json"
@@ -73,8 +83,11 @@ elif inputtext == "google":
     print("구글 스프레드시트 이름을 입력해주세요.")
     spreadsheet_name = input()
 
-    print("시트 개수를 입력하세요.")
-    sheetamount = int(input())
+    if sumbool:
+        sheetamount = 1
+    else:
+        print("시트 개수를 입력하세요.")
+        sheetamount = int(input())
 
     for aa in range(sheetamount):
         print("시트이름을 입력해주세요.")
@@ -147,6 +160,7 @@ for sheetindex in range(sheetamount):
         kill.append(0)
         tempscore.append(0)
         temprank.append(0)
+        sumscore.append(0)
 
     for i in range(track):
 
@@ -168,14 +182,11 @@ for sheetindex in range(sheetamount):
             else:
                 rank[j] = int(sheetvalue[3 + i][1 + j * 2])
                 temprank[j] = rank[j]
+                tempindex = 9 * (rank[j] - 1) + (people - 2)
+                temps = int(includekillscore[tempindex].value)
+                tempscore[j] += temps
 
-                if killbool:
-                    tempindex = 9 * (rank[j] - 1) + (people - 2)
-                    temps = int(includekillscore[tempindex].value)
-                    print(temps)
-                    tempscore[j] += temps
-
-            if killbool:
+            if killMode:
                 if not spreadbool:
                     print(f"{nick[j]}의 킬 수는?")
                     kill[j] = int(input())
@@ -190,7 +201,9 @@ for sheetindex in range(sheetamount):
                     else:
                         tempscore[j] += 1
 
-        print(tempscore)
+            sumscore[j] += tempscore[j]
+
+        print(f"sumscore : {sumscore}")
 
         for j in range(people):
             index = -1
@@ -253,6 +266,7 @@ for sheetindex in range(sheetamount):
 
         print(sup)
         print(sdown)
+        print(i)
 
         for j in range(people):
             bonus[j] = 1.0
@@ -283,6 +297,9 @@ for sheetindex in range(sheetamount):
         fulldata[nick[i]] = {"score": score[i], "winstrike": winstrike[i]}
         print(f"{nick[i]} : {score[i]}P   {winstrike[i]}ws")
 
+        if sumbool:
+            print(sumscore[i])
 
-with open(filename, "w", encoding="UTF-8") as jsonfile:
-    json.dump(fulldata, jsonfile, indent=4)
+if input("결과를 저장할려면 yes를 입력") == "yes":
+    with open(filename, "w", encoding="UTF-8") as jsonfile:
+        json.dump(fulldata, jsonfile, indent=4)
