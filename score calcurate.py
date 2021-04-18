@@ -180,18 +180,25 @@ for sheetindex in range(sheetamount):
                     rank[j] = people - retire + 1
 
             else:
-                rank[j] = int(sheetvalue[3 + i][1 + j * 2])
-                temprank[j] = rank[j]
-                tempindex = 9 * (rank[j] - 1) + (people - 2)
-                temps = int(includekillscore[tempindex].value)
-                tempscore[j] += temps
+                checkrank = sheetvalue[3 + i][1 + j * 2]
+                if not checkrank == "X":
+                    rank[j] = int(checkrank)
+                    temprank[j] = rank[j]
+                    tempindex = 9 * (rank[j] - 1) + (people - 2)
+                    temps = int(includekillscore[tempindex].value)
+                    tempscore[j] += temps
+                else:
+                    rank[j] = "not check"
 
             if killMode:
                 if not spreadbool:
                     print(f"{nick[j]}의 킬 수는?")
                     kill[j] = int(input())
                 else:
-                    kill[j] = int(sheetvalue[3 + i][2 + j * 2])
+                    if rank[j] == "not check":
+                        continue
+                    else:
+                        kill[j] = int(sheetvalue[3 + i][2 + j * 2])
 
                 for kk in range(kill[j]):
                     if kk == 0:
@@ -206,6 +213,8 @@ for sheetindex in range(sheetamount):
         print(f"sumscore : {sumscore}")
 
         for j in range(people):
+            if rank[j] == "not check":
+                continue
             index = -1
             rank[j] = 1
 
@@ -222,6 +231,7 @@ for sheetindex in range(sheetamount):
         print(rank)
 
         for j in range(people):
+
             a = 0.0
             b = 0.0
             win = 0
@@ -229,7 +239,13 @@ for sheetindex in range(sheetamount):
             sup[j] = 0
             sdown[j] = 0
             myrank = 1
+
+            if rank[j] == "not check":
+                continue
+
             for k in range(people):
+                if rank[k] == "not check":
+                    continue
                 if rank[j] > rank[k]:
                     lose = lose + 1
                     a = a + score[k]
@@ -264,11 +280,12 @@ for sheetindex in range(sheetamount):
                         1 - lose * scoreminusratio[people - 2]
                     )
 
-        print(sup)
-        print(sdown)
         print(i)
 
         for j in range(people):
+            if rank[j] == "not check":
+                continue
+
             bonus[j] = 1.0
             if rank[j] == 1:
                 if not winstrike == 1:
