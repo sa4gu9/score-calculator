@@ -40,6 +40,23 @@ scope = [
 sheetname = []
 sheet = None
 
+print("점수와 순위를 보고싶으면 rank 입력")
+if input() == "rank":
+    ranklist = []
+    print("파일 이름 입력")
+    filename = input() + ".json"
+    with open(filename, "r", encoding="UTF-8") as f:
+        alldata = json.load(f)
+        for user in alldata.keys():
+            rank = 0
+            for data in ranklist:
+                if data[1] > alldata[user]["score"]:
+                    rank += 1
+            ranklist.insert(rank, [user, alldata[user]["score"]])
+    for data in ranklist:
+        print(f"{data[0]} : {data[1]}")
+
+    exit()
 
 print("킬포함 점수를 측정하고 싶다면 kill을 입력해주세요.")
 inputdata = input()
