@@ -50,12 +50,8 @@ def GetAllData(filename):
             for data in ranklist:
                 if data[1] > alldata[user]["score"]:
                     rank += 1
-            ranklist.insert(rank, [user, alldata[user]["score"]])
-    returnData = ""
-    for data in ranklist:
-        tempData = f"{data[0]} : {data[1]}\n"
-        returnData += tempData
-    return returnData
+            ranklist.insert(rank, [user, alldata[user]["score"]])    
+    return ranklist
 
 
 def RunProgram():
