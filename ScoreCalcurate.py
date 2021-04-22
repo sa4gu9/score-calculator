@@ -6,33 +6,6 @@ import time
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-
-nick = []
-score = []
-winstrike = []
-datas = ""
-bonus = []
-
-scoreminusratio = [1.00, 0.5, 0.3, 0.25, 0.2, 0.15, 0.15, 0.13, 0.12]
-
-sup = []
-sdown = []
-who = []
-rank = []
-team = []
-kill = []
-tempscore = []
-sumscore = []
-temprank = []
-
-fulldata = {}
-
-retirebool = False
-killMode = False
-
-spreadbool = False
-sumbool = False
-
 scope = [
     "https://spreadsheets.google.com/feeds",
     "https://www.googleapis.com/auth/drive",
@@ -50,11 +23,36 @@ def GetAllData(filename):
             for data in ranklist:
                 if data[1] > alldata[user]["score"]:
                     rank += 1
-            ranklist.insert(rank, [user, alldata[user]["score"]])    
+            ranklist.insert(rank, [user, alldata[user]["score"]])
     return ranklist
 
 
 def RunProgram():
+    nick = []
+    score = []
+    winstrike = []
+    data = ""
+    bonus = []
+
+    scoreminusratio = [1.00, 0.5, 0.3, 0.25, 0.2, 0.15, 0.15, 0.13, 0.12]
+
+    sup = []
+    sdown = []
+    who = []
+    rank = []
+    team = []
+    kill = []
+    tempscore = []
+    sumscore = []
+    temprank = []
+
+    fulldata = {}
+
+    retirebool = False
+    killMode = False
+
+    spreadbool = False
+    sumbool = False
 
     print("점수와 순위를 보고싶으면 rank 입력")
     if input() == "rank":
@@ -140,6 +138,7 @@ def RunProgram():
         kill.clear()
         tempscore.clear()
         temprank.clear()
+        sumscore.clear()
 
         if not spreadbool:
             while people < 2 or people > len(scoreminusratio):
@@ -282,21 +281,35 @@ def RunProgram():
                 else:
                     winstrike[j] = 0
 
+                scoregap = abs(score[j] - a)
+                adjustscore = 0.1
+                adjustcut = 0.4
+
+                percent = 1 - lose * scoreminusratio[people - 2]
+
+                downdefault = 1
+
                 if rank[j] != 1:
                     if score[j] > a:
-                        sdown[j] = 1 + 0.15 * math.floor(score[j] - a)
+                        sdown[j] = (
+                            downdefault + (scoregap // adjustcut) * adjustscore
+                        )  # * percent
                     else:
-                        sdown[j] = 1 - 0.15 * math.floor(a - score[j])
+                        sdown[j] = (
+                            downdefault - (scoregap // adjustcut) * adjustscore
+                        )  # * percent
+
+                scoregap = abs(score[j] - b)
+
+                adjustscore = 0.1
+                adjustcut = 0.4
 
                 if win != 0:
+
                     if score[j] > b:
-                        sup[j] = 1 - 0.15 * math.floor(score[j] - b) * (
-                            1 - lose * scoreminusratio[people - 2]
-                        )
+                        sup[j] = 1 - adjustscore * (scoregap // adjustcut)
                     else:
-                        sup[j] = 1 + 0.15 * math.floor(b - score[j]) * (
-                            1 - lose * scoreminusratio[people - 2]
-                        )
+                        sup[j] = 1 + adjustscore * (scoregap // adjustcut)
 
             print(i)
 
@@ -313,16 +326,18 @@ def RunProgram():
                             temp = temp - 1
                     sup[j] = sup[j] * bonus[j]
 
-                sdown[j] = sdown[j]
-
                 if sdown[j] < 0:
                     sdown[j] = 0
+
+                print(nick[j])
+                print(sup[j])
+                print(sdown[j])
 
                 if sup[j] < 0:
                     sup[j] = 0
 
-                score[j] = score[j] + sup[j]
-                score[j] = score[j] - sdown[j]
+                score[j] = score[j] + float(sup[j])
+                score[j] = score[j] - float(sdown[j])
                 if score[j] < 0:
                     score[j] = 0
                 else:
@@ -338,3 +353,6 @@ def RunProgram():
     if input("결과를 저장할려면 yes를 입력") == "yes":
         with open(filename, "w", encoding="UTF-8") as jsonfile:
             json.dump(fulldata, jsonfile, indent=4)
+
+
+# RunProgram()

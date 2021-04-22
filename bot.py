@@ -3,6 +3,7 @@ from discord.ext import commands
 import discord
 import ScoreCalcurate
 
+
 tokenfile = open("token.json", "r")
 bot = commands.Bot(command_prefix=">")
 token = json.load(tokenfile)
