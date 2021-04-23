@@ -16,7 +16,7 @@ sheet = None
 
 def GetAllData(filename):
     ranklist = []
-    with open(filename, "r", encoding="UTF-8") as f:
+    with open("data/" + filename, "r", encoding="UTF-8") as f:
         alldata = json.load(f)
         for user in alldata.keys():
             rank = 0
@@ -27,11 +27,17 @@ def GetAllData(filename):
     return ranklist
 
 
+def InputFilename():
+    print("파일 이름 입력")
+    filename = input() + ".json"
+
+    return filename
+
+
 def RunProgram():
     nick = []
     score = []
     winstrike = []
-    data = ""
     bonus = []
 
     scoreminusratio = [1.00, 0.5, 0.3, 0.25, 0.2, 0.15, 0.15, 0.13, 0.12]
@@ -56,8 +62,7 @@ def RunProgram():
 
     print("점수와 순위를 보고싶으면 rank 입력")
     if input() == "rank":
-        print("파일 이름 입력")
-        filename = input() + ".json"
+        filename = InputFilename()
         GetAllData(filename)
         exit()
 
@@ -255,7 +260,6 @@ def RunProgram():
                 lose = 0
                 sup[j] = 0
                 sdown[j] = 0
-                myrank = 1
 
                 if rank[j] == "not check":
                     continue
@@ -282,8 +286,8 @@ def RunProgram():
                     winstrike[j] = 0
 
                 scoregap = abs(score[j] - a)
-                adjustscore = 0.1
-                adjustcut = 0.4
+                adjustscore = 0.07
+                adjustcut = 0.5
 
                 percent = 1 - lose * scoreminusratio[people - 2]
 
@@ -293,23 +297,25 @@ def RunProgram():
                     if score[j] > a:
                         sdown[j] = (
                             downdefault + (scoregap // adjustcut) * adjustscore
-                        )  # * percent
+                        ) * percent
                     else:
                         sdown[j] = (
                             downdefault - (scoregap // adjustcut) * adjustscore
-                        )  # * percent
+                        ) * percent
 
                 scoregap = abs(score[j] - b)
 
                 adjustscore = 0.1
-                adjustcut = 0.4
+                adjustcut = 0.3
+
+                updefault = 1
 
                 if win != 0:
 
                     if score[j] > b:
-                        sup[j] = 1 - adjustscore * (scoregap // adjustcut)
+                        sup[j] = updefault - adjustscore * (scoregap // adjustcut)
                     else:
-                        sup[j] = 1 + adjustscore * (scoregap // adjustcut)
+                        sup[j] = updefault + adjustscore * (scoregap // adjustcut)
 
             print(i)
 
@@ -329,15 +335,13 @@ def RunProgram():
                 if sdown[j] < 0:
                     sdown[j] = 0
 
-                print(nick[j])
-                print(sup[j])
-                print(sdown[j])
-
                 if sup[j] < 0:
                     sup[j] = 0
 
-                score[j] = score[j] + float(sup[j])
-                score[j] = score[j] - float(sdown[j])
+                print(f"{nick[j]} sup : {sup[j]}")
+                print(f"{nick[j]} sdown : {sdown[j]}")
+
+                score[j] = score[j] + sup[j] - sdown[j]
                 if score[j] < 0:
                     score[j] = 0
                 else:
