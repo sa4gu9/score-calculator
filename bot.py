@@ -1,6 +1,7 @@
 import json
 from discord.ext import commands
 import discord
+import os
 import ScoreCalcurate
 
 
@@ -10,18 +11,23 @@ token = json.load(tokenfile)
 
 
 @bot.command()
-async def 모두보기(ctx, dataname):
-    printData = ScoreCalcurate.GetAllData(dataname)
-    returnData = ""
-    for data in printData:
-        tempData = f"{data[0]} : {data[1]}\n"
-        returnData += tempData
-    await ctx.send(returnData)
-    return
+async def 정보(ctx, dataname=None, username=None):
+    if dataname == None:
+        datalist = os.listdir("data")
+        senddata = ""
+        for data in datalist:
+            senddata += f"{data}\n"
+        await ctx.send(senddata)
+        return
 
-
-@bot.command()
-async def 정보(ctx, dataname, username):
+    if username == None:
+        printData = ScoreCalcurate.GetAllData(dataname)
+        returnData = ""
+        for data in printData:
+            tempData = f"{data[0]} : {data[1]}\n"
+            returnData += tempData
+        await ctx.send(returnData)
+        return
     rankData = ScoreCalcurate.GetAllData(dataname)
     for data in rankData:
         if data[0] == username:

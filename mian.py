@@ -1,0 +1,3 @@
+import ScoreCalcurate
+
+ScoreCalcurate.RunProgram()

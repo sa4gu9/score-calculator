@@ -29,7 +29,7 @@ def GetAllData(filename):
 
 def InputFilename():
     print("파일 이름 입력")
-    filename = input() + ".json"
+    filename = "data/" + input() + ".json"
 
     return filename
 
@@ -79,7 +79,7 @@ def RunProgram():
         print("누적모드를 적용합니다.")
 
     print("데이터 이름을 입력하세요.")
-    filename = input() + ".json"
+    filename = "data/" + input() + ".json"
 
     print("직접 결과를 입력하려면 hand를, 구글 스프레드시트를 이용하려면 google을 입력해주세요.")
     # inputtext = input()
@@ -125,6 +125,7 @@ def RunProgram():
     if os.path.isfile(filename):
         with open(filename, "r", encoding="UTF-8") as jsonfile:
             fulldata = json.load(jsonfile)
+    print(fulldata)
 
     people = 0
     maxpeople = len(scoreminusratio) + 1
@@ -357,6 +358,3 @@ def RunProgram():
     if input("결과를 저장할려면 yes를 입력") == "yes":
         with open(filename, "w", encoding="UTF-8") as jsonfile:
             json.dump(fulldata, jsonfile, indent=4)
-
-
-# RunProgram()
