@@ -3,6 +3,8 @@ from discord.ext import commands
 import discord
 import os
 import ScoreCalcurate
+from datetime import datetime
+import betting
 
 
 tokenfile = open("token.json", "r")
@@ -26,7 +28,7 @@ async def 정보(ctx, dataname=None, username=None):
         for data in printData:
             tempData = f"{data[0]} : {data[1]}\n"
             returnData += tempData
-        await ctx.send(returnData)
+        await ctx.author.send(returnData)
         return
     rankData = ScoreCalcurate.GetAllData(dataname)
     for data in rankData:
@@ -34,6 +36,19 @@ async def 정보(ctx, dataname=None, username=None):
             await ctx.send(f"{data[0]} {data[1]} {rankData.index(data)+1}")
             return
     await ctx.send("존재하지 않는 유저입니다.")
+
+
+@bot.command()
+async def 베팅(ctx, betname=None, index=None, betmoa=None):
+    betinfo = betting.GetBetinfo(betname)
+
+    if betname == None:
+        for info in betinfo:
+            await ctx.send(info)
+    else:
+        await ctx.send(betinfo)
+    # now = datetime.now()
+    # today = f"{now.year}{now.month}{now.day}"
 
 
 bot.run(token["token"])

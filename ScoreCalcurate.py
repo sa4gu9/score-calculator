@@ -2,6 +2,8 @@ import math
 import json
 import os
 import time
+import elo
+
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -12,6 +14,12 @@ scope = [
 ]
 sheetname = []
 sheet = None
+
+
+def GetSheetValue(gc, spreadsheet_name, sheetname):
+    sheet = gc.open(spreadsheet_name).worksheet(sheetname)
+    sheetvalue = sheet.get_all_values()
+    return sheetvalue
 
 
 def GetAllData(filename):
@@ -154,8 +162,8 @@ def RunProgram():
             print("경기 수를 입력해주세요>>")
             track = int(input())
         else:
-            sheet = gc.open(spreadsheet_name).worksheet(sheetname[sheetindex])
-            sheetvalue = sheet.get_all_values()
+            sheetvalue = GetSheetValue(gc, spreadsheet_name, sheetname[sheetindex])
+
             people = int(sheetvalue[0][1])
             track = int(sheetvalue[0][3])
 
@@ -174,7 +182,7 @@ def RunProgram():
                 winstrike.append(fulldata[nickname]["winstrike"])
 
             else:
-                score.append(10)
+                score.append(2000)
                 winstrike.append(0)
             rank.append(0)
             sdown.append(0)
@@ -254,99 +262,64 @@ def RunProgram():
             print(rank)
 
             for j in range(people):
+                if rank[j] == "not check":
+                    continue
 
-                a = 0.0
-                b = 0.0
+                loseScore = 0.0
+                winScore = 0.0
                 win = 0
                 lose = 0
                 sup[j] = 0
                 sdown[j] = 0
-
-                if rank[j] == "not check":
-                    continue
 
                 for k in range(people):
                     if rank[k] == "not check":
                         continue
                     if rank[j] > rank[k]:
                         lose = lose + 1
-                        a = a + score[k]
+                        loseScore = loseScore + score[k]
                     elif rank[j] < rank[k]:
                         win = win + 1
-                        b = b + score[k]
+                        winScore = winScore + score[k]
 
                 if lose != 0:
-                    a = a / lose
+                    loseScore = loseScore / lose
 
                 if win != 0:
-                    b = b / win
+                    winScore = winScore / win
 
                 if rank[j] == 1:
                     winstrike[j] = winstrike[j] + 1
                 else:
                     winstrike[j] = 0
 
-                scoregap = abs(score[j] - a)
-                adjustscore = 0.07
-                adjustcut = 0.5
-
-                percent = 1 - lose * scoreminusratio[people - 2]
-
-                downdefault = 1
-
-                if rank[j] != 1:
-                    if score[j] > a:
-                        sdown[j] = (
-                            downdefault + (scoregap // adjustcut) * adjustscore
-                        ) * percent
+                if rank[j] == 1:
+                    percent = 0
+                else:
+                    if not rank[j] == GetMax(rank):
+                        percent = lose * scoreminusratio[people - 2]
                     else:
-                        sdown[j] = (
-                            downdefault - (scoregap // adjustcut) * adjustscore
-                        ) * percent
+                        percent = 1
 
-                scoregap = abs(score[j] - b)
+                sup[j] = abs(score[j] - elo.rate_1vs1(score[j], winScore)[0])
 
-                adjustscore = 0.1
-                adjustcut = 0.3
+                sdown[j] = (
+                    abs(score[j] - elo.rate_1vs1(loseScore, score[j])[1]) * percent
+                )
 
-                updefault = 1
+                print([sup[j], sdown[j]])
 
-                if win != 0:
-
-                    if score[j] > b:
-                        sup[j] = updefault - adjustscore * (scoregap // adjustcut)
-                    else:
-                        sup[j] = updefault + adjustscore * (scoregap // adjustcut)
-
-            print(i)
-
-            for j in range(people):
-                if rank[j] == "not check":
-                    continue
-
-                bonus[j] = 1.0
                 if rank[j] == 1:
                     if not winstrike == 1:
                         temp = winstrike[j]
                         while temp > 0:
-                            bonus[j] = bonus[j] + 0.01 * temp
+                            bonus[j] = bonus[j] + 0.1 * temp
                             temp = temp - 1
-                    sup[j] = sup[j] * bonus[j]
-
-                if sdown[j] < 0:
-                    sdown[j] = 0
-
-                if sup[j] < 0:
-                    sup[j] = 0
-
-                print(f"{nick[j]} sup : {sup[j]}")
-                print(f"{nick[j]} sdown : {sdown[j]}")
+                    sup[j] *= bonus[j]
 
                 score[j] = score[j] + sup[j] - sdown[j]
-                if score[j] < 0:
-                    score[j] = 0
-                else:
-                    score[j] = round(score[j], 4)
+
+            print(i)
 
         for i in range(people):
             fulldata[nick[i]] = {"score": score[i], "winstrike": winstrike[i]}
@@ -355,6 +328,24 @@ def RunProgram():
             if sumbool:
                 print(sumscore[i])
 
+    SaveData(filename, fulldata)
+
+
+def SaveData(filename, fulldata):
     if input("결과를 저장할려면 yes를 입력") == "yes":
         with open(filename, "w", encoding="UTF-8") as jsonfile:
             json.dump(fulldata, jsonfile, indent=4)
+
+
+def GetMax(rank):
+    returnValue = None
+    for i in rank:
+        if i == "not check":
+            continue
+        else:
+            if returnValue == None:
+                returnValue = i
+            else:
+                if i > returnValue:
+                    returnValue = i
+    return returnValue
