@@ -297,7 +297,13 @@ def RunProgram():
                     percent = 0
                 else:
                     if not rank[j] == GetMax(rank):
-                        percent = lose * scoreminusratio[people - 2]
+                        if people > 10:
+                            if rank[j] > 10:
+                                percent = 1
+                            else:
+                                percent = lose * scoreminusratio[9]
+                        else:
+                            percent = lose * scoreminusratio[people - 2]
                     else:
                         percent = 1
 
@@ -317,7 +323,7 @@ def RunProgram():
                             temp = temp - 1
                     sup[j] *= bonus[j]
 
-                score[j] = score[j] + sup[j] - sdown[j]
+                score[j] = round(score[j] + sup[j] - sdown[j], 4)
 
             print(i)
 
