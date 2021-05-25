@@ -13,7 +13,7 @@ token = json.load(tokenfile)
 
 
 @bot.command()
-async def 정보(ctx, dataname=None, username=None):
+async def 정보(ctx, dataname=None, sort=None, username=None):
     if dataname == None:
         datalist = os.listdir("data")
         senddata = ""
@@ -23,17 +23,19 @@ async def 정보(ctx, dataname=None, username=None):
         return
 
     if username == None:
-        printData = ScoreCalcurate.GetAllData(dataname)
+        printData = ScoreCalcurate.GetAllData(dataname, sort)
         returnData = ""
         for data in printData:
             tempData = f"{data[0]} : {data[1]}    {data[2]}   -> {data[3]}\n"
             returnData += tempData
         await ctx.send(returnData)
         return
-    rankData = ScoreCalcurate.GetAllData(dataname)
+    rankData = ScoreCalcurate.GetAllData(dataname, sort)
     for data in rankData:
         if data[0] == username:
-            await ctx.send(f"{data[0]} {data[1]} {rankData.index(data)+1}")
+            await ctx.send(
+                f"{data[0]} {data[1]}점 {data[2]} -> {data[3]}%  {rankData.index(data)+1}위"
+            )
             return
     await ctx.send("존재하지 않는 유저입니다.")
 

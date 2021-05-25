@@ -6,6 +6,7 @@ import elo
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from pandas.core.base import NoNewAttributesMixin
 
 scope = [
     "https://spreadsheets.google.com/feeds",
@@ -21,27 +22,33 @@ def GetSheetValue(gc, spreadsheet_name, sheetname):
     return sheetvalue
 
 
-def GetAllData(filename):
+def GetAllData(filename, sort):
     ranklist = []
     with open("data/" + filename, "r", encoding="UTF-8") as f:
         alldata = json.load(f)
-        for user in alldata.keys():
-            rank = 0
-            for data in ranklist:
+    for user in alldata.keys():
+        avgmax = round(alldata[user]["sumMaxrank"] / alldata[user]["totalgame"], 2)
+        avgrank = round(alldata[user]["totalrank"] / alldata[user]["totalgame"], 2)
+        rankpercent = round((avgrank - 1) / (avgmax - 1) * 100, 2)
+
+        rank = 0
+        for data in ranklist:
+            if sort == "score":
                 if data[1] > alldata[user]["score"]:
                     rank += 1
+            elif sort == "avgrank":
+                if data[3] < rankpercent:
+                    rank += 1
 
-            avgmax = round(alldata[user]["sumMaxrank"] / alldata[user]["totalgame"], 2)
-            avgrank = round(alldata[user]["totalrank"] / alldata[user]["totalgame"], 2)
-            ranklist.insert(
-                rank,
-                [
-                    user,
-                    alldata[user]["score"],
-                    f"{avgrank}/{avgmax}",
-                    round((avgrank - 1) / (avgmax - 1) * 100, 2),
-                ],
-            )
+        ranklist.insert(
+            rank,
+            [
+                user,
+                alldata[user]["score"],
+                f"{avgrank}/{avgmax}",
+                rankpercent,
+            ],
+        )
     return ranklist
 
 
