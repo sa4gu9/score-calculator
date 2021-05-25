@@ -262,11 +262,11 @@ def RunProgram():
 
                     for kk in range(kill[j]):
                         if kk == 0:
-                            tempscore[j] += 4
+                            tempscore[j] += sheetvalue[27][3]
                         elif kk == 1:
-                            tempscore[j] += 2
+                            tempscore[j] += sheetvalue[27][4]
                         else:
-                            tempscore[j] += 1
+                            tempscore[j] += sheetvalue[27][5]
 
                 sumscore[j] += tempscore[j]
 
