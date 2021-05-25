@@ -26,9 +26,9 @@ async def 정보(ctx, dataname=None, username=None):
         printData = ScoreCalcurate.GetAllData(dataname)
         returnData = ""
         for data in printData:
-            tempData = f"{data[0]} : {data[1]}\n"
+            tempData = f"{data[0]} : {data[1]}    {data[2]}   -> {data[3]}\n"
             returnData += tempData
-        await ctx.author.send(returnData)
+        await ctx.send(returnData)
         return
     rankData = ScoreCalcurate.GetAllData(dataname)
     for data in rankData:

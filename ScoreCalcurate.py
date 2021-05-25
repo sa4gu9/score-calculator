@@ -4,7 +4,6 @@ import os
 import time
 import elo
 
-
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -31,7 +30,18 @@ def GetAllData(filename):
             for data in ranklist:
                 if data[1] > alldata[user]["score"]:
                     rank += 1
-            ranklist.insert(rank, [user, alldata[user]["score"]])
+
+            avgmax = round(alldata[user]["sumMaxrank"] / alldata[user]["totalgame"], 2)
+            avgrank = round(alldata[user]["totalrank"] / alldata[user]["totalgame"], 2)
+            ranklist.insert(
+                rank,
+                [
+                    user,
+                    alldata[user]["score"],
+                    f"{avgrank}/{avgmax}",
+                    round((avgrank - 1) / (avgmax - 1) * 100, 2),
+                ],
+            )
     return ranklist
 
 
@@ -59,6 +69,10 @@ def RunProgram():
     tempscore = []
     sumscore = []
     temprank = []
+
+    totalrank = []
+    sumMaxrank = []
+    totalgame = []
 
     fulldata = {}
 
@@ -133,7 +147,6 @@ def RunProgram():
     if os.path.isfile(filename):
         with open(filename, "r", encoding="UTF-8") as jsonfile:
             fulldata = json.load(jsonfile)
-    print(fulldata)
 
     people = 0
     maxpeople = len(scoreminusratio) + 1
@@ -153,6 +166,10 @@ def RunProgram():
         tempscore.clear()
         temprank.clear()
         sumscore.clear()
+
+        totalrank.clear()
+        sumMaxrank.clear()
+        totalgame.clear()
 
         if not spreadbool:
             while people < 2 or people > len(scoreminusratio):
@@ -174,16 +191,26 @@ def RunProgram():
                 nickname = input()
                 nick.append(nickname)
             else:
-                nickname = sheetvalue[1][1 + i * 2]
+                nickname = sheetvalue[1][2 + i * 2]
                 nick.append(nickname)
 
             if nickname in fulldata.keys():
                 score.append(fulldata[nickname]["score"])
                 winstrike.append(fulldata[nickname]["winstrike"])
 
+                totalrank.append(fulldata[nickname]["totalrank"])
+                sumMaxrank.append(fulldata[nickname]["sumMaxrank"])
+                totalgame.append(fulldata[nickname]["totalgame"])
+
             else:
-                score.append(2000)
-                winstrike.append(0)
+                fulldata[nickname] = {
+                    "score": 2000,
+                    "winstrike": 0,
+                    "totalrank": 0,
+                    "sumMaxrank": 0,
+                    "totalgame": 0,
+                }
+
             rank.append(0)
             sdown.append(0)
             sup.append(0)
@@ -194,7 +221,7 @@ def RunProgram():
             sumscore.append(0)
 
         for i in range(track):
-
+            tempPeople = 0
             retire = 0
 
             if retirebool:
@@ -211,8 +238,10 @@ def RunProgram():
                         rank[j] = people - retire + 1
 
                 else:
-                    checkrank = sheetvalue[3 + i][1 + j * 2]
+                    mapname = sheetvalue[3 + i][1]
+                    checkrank = sheetvalue[3 + i][2 + j * 2]
                     if not checkrank == "X":
+                        tempPeople += 1
                         rank[j] = int(checkrank)
                         temprank[j] = rank[j]
                         tempindex = 9 * (rank[j] - 1) + (people - 2)
@@ -277,10 +306,10 @@ def RunProgram():
                         continue
                     if rank[j] > rank[k]:
                         lose = lose + 1
-                        loseScore = loseScore + score[k]
+                        loseScore += fulldata[nick[k]]["score"]
                     elif rank[j] < rank[k]:
                         win = win + 1
-                        winScore = winScore + score[k]
+                        winScore += fulldata[nick[k]]["score"]
 
                 if lose != 0:
                     loseScore = loseScore / lose
@@ -289,47 +318,70 @@ def RunProgram():
                     winScore = winScore / win
 
                 if rank[j] == 1:
-                    winstrike[j] = winstrike[j] + 1
+                    fulldata[nick[j]]["winstrike"] += 1
                 else:
-                    winstrike[j] = 0
+                    fulldata[nick[j]]["winstrike"] = 0
 
                 if rank[j] == 1:
-                    percent = 0
+                    downpercent = 0
                 else:
                     if not rank[j] == GetMax(rank):
                         if people > 10:
                             if rank[j] > 10:
-                                percent = 1
+                                downpercent = 1
                             else:
-                                percent = lose * scoreminusratio[9]
+                                downpercent = lose * scoreminusratio[9]
                         else:
-                            percent = lose * scoreminusratio[people - 2]
+                            downpercent = lose * scoreminusratio[people - 2]
                     else:
-                        percent = 1
+                        downpercent = 1
 
-                sup[j] = abs(score[j] - elo.rate_1vs1(score[j], winScore)[0])
+                print(f"{nick[j]} : {downpercent}")
 
-                sdown[j] = (
-                    abs(score[j] - elo.rate_1vs1(loseScore, score[j])[1]) * percent
-                )
-
-                print([sup[j], sdown[j]])
+                uppercent = 1
 
                 if rank[j] == 1:
-                    if not winstrike == 1:
-                        temp = winstrike[j]
+                    temp = fulldata[nick[j]]["winstrike"]
+                    strikeBonus = 0
+                    if not temp == 1:
                         while temp > 0:
-                            bonus[j] = bonus[j] + 0.1 * temp
+                            strikeBonus += 0.05 * temp
                             temp = temp - 1
-                    sup[j] *= bonus[j]
 
-                score[j] = round(score[j] + sup[j] - sdown[j], 4)
+                    if tempPeople > 3:
+                        uppercent = 1 + strikeBonus * (tempPeople - 3)
 
-            print(i)
+                sup[j] = (
+                    abs(
+                        fulldata[nick[j]]["score"]
+                        - elo.rate_1vs1(fulldata[nick[j]]["score"], winScore)[0]
+                    )
+                    * uppercent
+                )
+
+                sdown[j] = (
+                    abs(
+                        fulldata[nick[j]]["score"]
+                        - elo.rate_1vs1(loseScore, fulldata[nick[j]]["score"])[1]
+                    )
+                    * downpercent
+                )
+
+                fulldata[nick[j]]["totalrank"] += rank[j]
+                fulldata[nick[j]]["sumMaxrank"] += tempPeople
+                fulldata[nick[j]]["totalgame"] += 1
+                fulldata[nick[j]]["score"] = round(
+                    fulldata[nick[j]]["score"] + sup[j] - sdown[j], 4
+                )
 
         for i in range(people):
-            fulldata[nick[i]] = {"score": score[i], "winstrike": winstrike[i]}
-            print(f"{nick[i]} : {score[i]}P   {winstrike[i]}ws")
+            userdata = fulldata[nick[i]]
+            avgmax = userdata["sumMaxrank"] / userdata["totalgame"]
+            avgrank = userdata["totalrank"] / userdata["totalgame"]
+
+            print(
+                f"{nick[i]} : {userdata['score']}P   {userdata['winstrike']}ws {avgrank}/{avgmax}"
+            )
 
             if sumbool:
                 print(sumscore[i])
