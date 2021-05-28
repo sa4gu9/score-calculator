@@ -24,18 +24,20 @@ async def 정보(ctx, dataname=None, sort=None, username=None):
 
     if username == None:
         printData = ScoreCalcurate.GetAllData(dataname, sort)
-        returnData = ""
+        returnData = "```"
         for data in printData:
-            tempData = f"{data[0]} : {data[1]}    {data[2]}   -> {data[3]}\n"
+            tempData = f"""{'%-15s' % data[0]} {'%-9s' % data[1]}  {'%-9s' % data[2]}  {'%-5s' % data[3]}\n"""
             returnData += tempData
+        returnData += "```"
         await ctx.send(returnData)
         return
     rankData = ScoreCalcurate.GetAllData(dataname, sort)
     for data in rankData:
         if data[0] == username:
             await ctx.send(
-                f"{data[0]} {data[1]}점 {data[2]} -> {data[3]}%  {rankData.index(data)+1}위"
+                f"""{'%-15s' % data[0]} {'%-9s' % data[1]}  {'%-9s' % data[2]}  {'%-5s' % data[3]}  {'%-2s' % rankData.index(data) + 1}위\n"""
             )
+
             return
     await ctx.send("존재하지 않는 유저입니다.")
 

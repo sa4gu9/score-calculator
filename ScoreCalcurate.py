@@ -59,7 +59,12 @@ def InputFilename():
     return filename
 
 
+fulldata = {}
+
+
 def RunProgram():
+    global fulldata
+
     nick = []
     score = []
     winstrike = []
@@ -67,8 +72,6 @@ def RunProgram():
 
     scoreminusratio = [1.00, 0.5, 0.3, 0.25, 0.2, 0.15, 0.15, 0.13, 0.12]
 
-    sup = []
-    sdown = []
     who = []
     rank = []
     team = []
@@ -81,12 +84,8 @@ def RunProgram():
     sumMaxrank = []
     totalgame = []
 
-    fulldata = {}
-
-    retirebool = False
     killMode = False
 
-    spreadbool = False
     sumbool = False
 
     print("점수와 순위를 보고싶으면 rank 입력")
@@ -110,46 +109,31 @@ def RunProgram():
     print("데이터 이름을 입력하세요.")
     filename = "data/" + input() + ".json"
 
-    print("직접 결과를 입력하려면 hand를, 구글 스프레드시트를 이용하려면 google을 입력해주세요.")
-    # inputtext = input()
-    inputtext = "google"
-
     includekillscore = None
 
-    if inputtext == "hand":
+    json_file_name = "spreadjson.json"
+
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(
+        json_file_name, scope
+    )
+
+    gc = gspread.authorize(credentials)
+
+    print("구글 스프레드시트 이름을 입력해주세요.")
+    spreadsheet_name = input()
+
+    if sumbool:
         sheetamount = 1
-        pass
-    elif inputtext == "google":
-        spreadbool = True
-
-        print("구글 스프레드시트 json파일 이름을 입력해주세요.")
-        # json_file_name = input() + ".json"
-        json_file_name = "spreadjson.json"
-
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(
-            json_file_name, scope
-        )
-
-        gc = gspread.authorize(credentials)
-
-        print("구글 스프레드시트 이름을 입력해주세요.")
-        spreadsheet_name = input()
-
-        if sumbool:
-            sheetamount = 1
-        else:
-            print("시트 개수를 입력하세요.")
-            sheetamount = int(input())
-
-        for aa in range(sheetamount):
-            print("시트이름을 입력해주세요.")
-            sheetname.append(input())
-
-        scoresheet = gc.open(spreadsheet_name).worksheet("킬점수반영시 점수표")
-        includekillscore = scoresheet.range("B2:J11")
-
     else:
-        exit()
+        print("시트 개수를 입력하세요.")
+        sheetamount = int(input())
+
+    for aa in range(sheetamount):
+        print("시트이름을 입력해주세요.")
+        sheetname.append(input())
+
+    scoresheet = gc.open(spreadsheet_name).worksheet("킬점수반영시 점수표")
+    includekillscore = scoresheet.range("B2:J11")
 
     if os.path.isfile(filename):
         with open(filename, "r", encoding="UTF-8") as jsonfile:
@@ -164,8 +148,6 @@ def RunProgram():
         score.clear()
         winstrike.clear()
         bonus.clear()
-        sup.clear()
-        sdown.clear()
         who.clear()
         rank.clear()
         team.clear()
@@ -178,28 +160,15 @@ def RunProgram():
         sumMaxrank.clear()
         totalgame.clear()
 
-        if not spreadbool:
-            while people < 2 or people > len(scoreminusratio):
-                print(f"참가인원(2명~{maxpeople}명)을 입력하세요>>")
-                people = int(input())
+        sheetvalue = GetSheetValue(gc, spreadsheet_name, sheetname[sheetindex])
 
-            print("경기 수를 입력해주세요>>")
-            track = int(input())
-        else:
-            sheetvalue = GetSheetValue(gc, spreadsheet_name, sheetname[sheetindex])
-
-            people = int(sheetvalue[0][1])
-            track = int(sheetvalue[0][3])
+        people = int(sheetvalue[0][1])
+        track = int(sheetvalue[0][3])
 
         for i in range(people):
-            nickname = None
-            if not spreadbool:
-                print("참가 할 사람의 닉네임을 입력하세요>>")
-                nickname = input()
-                nick.append(nickname)
-            else:
-                nickname = sheetvalue[1][2 + i * 2]
-                nick.append(nickname)
+
+            nickname = sheetvalue[1][2 + i * 2]
+            nick.append(nickname)
 
             if nickname in fulldata.keys():
                 score.append(fulldata[nickname]["score"])
@@ -219,8 +188,6 @@ def RunProgram():
                 }
 
             rank.append(0)
-            sdown.append(0)
-            sup.append(0)
             bonus.append(0)
             kill.append(0)
             tempscore.append(0)
@@ -231,41 +198,26 @@ def RunProgram():
             tempPeople = 0
             retire = 0
 
-            if retirebool:
-                if not spreadbool:
-                    print("리타이어 수를 입력하세요>>")
-                    retire = int(input())
-
             for j in range(people):
                 tempscore[j] = 0
-                if not spreadbool:
-                    print(f"{nick[j]}의 등수는? 리타는 {maxpeople+1}로 입력>>")
-                    rank[j] = int(input())
-                    if rank[j] == maxpeople + 1:
-                        rank[j] = people - retire + 1
 
+                mapname = sheetvalue[3 + i][1]
+                checkrank = sheetvalue[3 + i][2 + j * 2]
+                if not checkrank == "X":
+                    tempPeople += 1
+                    rank[j] = int(checkrank)
+                    temprank[j] = rank[j]
+                    tempindex = 9 * (rank[j] - 1) + (people - 2)
+                    temps = int(includekillscore[tempindex].value)
+                    tempscore[j] += temps
                 else:
-                    mapname = sheetvalue[3 + i][1]
-                    checkrank = sheetvalue[3 + i][2 + j * 2]
-                    if not checkrank == "X":
-                        tempPeople += 1
-                        rank[j] = int(checkrank)
-                        temprank[j] = rank[j]
-                        tempindex = 9 * (rank[j] - 1) + (people - 2)
-                        temps = int(includekillscore[tempindex].value)
-                        tempscore[j] += temps
-                    else:
-                        rank[j] = "not check"
+                    rank[j] = "not check"
 
                 if killMode:
-                    if not spreadbool:
-                        print(f"{nick[j]}의 킬 수는?")
-                        kill[j] = int(input())
+                    if rank[j] == "not check":
+                        continue
                     else:
-                        if rank[j] == "not check":
-                            continue
-                        else:
-                            kill[j] = int(sheetvalue[3 + i][2 + j * 2])
+                        kill[j] = int(sheetvalue[3 + i][2 + j * 2])
 
                     for kk in range(kill[j]):
                         if kk == 0:
@@ -276,8 +228,6 @@ def RunProgram():
                             tempscore[j] += sheetvalue[27][5]
 
                 sumscore[j] += tempscore[j]
-
-            print(f"sumscore : {sumscore}")
 
             for j in range(people):
                 if rank[j] == "not check":
@@ -305,8 +255,6 @@ def RunProgram():
                 winScore = 0.0
                 win = 0
                 lose = 0
-                sup[j] = 0
-                sdown[j] = 0
 
                 for k in range(people):
                     if rank[k] == "not check":
@@ -329,6 +277,8 @@ def RunProgram():
                 else:
                     fulldata[nick[j]]["winstrike"] = 0
 
+                downpercent = 0
+
                 if rank[j] == 1:
                     downpercent = 0
                 else:
@@ -343,8 +293,6 @@ def RunProgram():
                     else:
                         downpercent = 1
 
-                print(f"{nick[j]} : {downpercent}")
-
                 uppercent = 1
 
                 if rank[j] == 1:
@@ -358,27 +306,19 @@ def RunProgram():
                     if tempPeople > 3:
                         uppercent = 1 + strikeBonus * (tempPeople - 3)
 
-                sup[j] = (
-                    abs(
-                        fulldata[nick[j]]["score"]
-                        - elo.rate_1vs1(fulldata[nick[j]]["score"], winScore)[0]
-                    )
-                    * uppercent
-                )
-
-                sdown[j] = (
-                    abs(
-                        fulldata[nick[j]]["score"]
-                        - elo.rate_1vs1(loseScore, fulldata[nick[j]]["score"])[1]
-                    )
-                    * downpercent
+                changeScore = GetChangeScore(
+                    fulldata[nick[j]]["score"],
+                    winScore,
+                    loseScore,
+                    uppercent,
+                    downpercent,
                 )
 
                 fulldata[nick[j]]["totalrank"] += rank[j]
                 fulldata[nick[j]]["sumMaxrank"] += tempPeople
                 fulldata[nick[j]]["totalgame"] += 1
                 fulldata[nick[j]]["score"] = round(
-                    fulldata[nick[j]]["score"] + sup[j] - sdown[j], 4
+                    fulldata[nick[j]]["score"] + changeScore, 4
                 )
 
         for i in range(people):
@@ -414,3 +354,12 @@ def GetMax(rank):
                 if i > returnValue:
                     returnValue = i
     return returnValue
+
+
+def GetChangeScore(myScore, winScore, loseScore, uppercent, downpercent):
+
+    sup = abs(myScore - elo.rate_1vs1(myScore, winScore)[0]) * uppercent
+
+    sdown = abs(myScore - elo.rate_1vs1(loseScore, myScore)[1]) * downpercent
+
+    return sup - sdown
