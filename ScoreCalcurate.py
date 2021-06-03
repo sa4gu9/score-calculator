@@ -341,7 +341,7 @@ def SaveData(filename, fulldata):
         with open(filename, "w", encoding="UTF-8") as jsonfile:
             json.dump(fulldata, jsonfile, indent=4)
 
-
+    
 def GetMax(rank):
     returnValue = None
     for i in rank:
