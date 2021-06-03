@@ -8,10 +8,10 @@ Elo 기반 점수 측정으로 객관적인 실력의 정도를 확인 가능<br
 - 팀전을 포함할 경우 점수의 객관성이 떨어짐
 - 점수 인플레이션이 일어남
 
-점수 확인 봇을 킬수 있는 bot.py
-[카트리그 데이터](https://github.com/KartRanking/KartRanking)를 가져오기 위한 writerecord.py
-점수를 계산해주는 ScoreCalcurate.py
-ScoreCalcurate.py를 실행해주는 mian.py
+점수 확인 봇을 킬수 있는 bot.py<br>
+[카트리그 데이터](https://github.com/KartRanking/KartRanking)를 가져오기 위한 writerecord.py<br>
+점수를 계산해주는 ScoreCalcurate.py<br>
+ScoreCalcurate.py를 실행해주는 mian.py<br>
 
 사용 방법
 
