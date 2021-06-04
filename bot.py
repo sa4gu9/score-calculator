@@ -24,10 +24,21 @@ async def 정보(ctx, dataname=None, sort=None, username=None):
 
     if username == None:
         printData = ScoreCalcurate.GetAllData(dataname, sort)
+
+        totalLen = 0
         returnData = "```"
         for data in printData:
-            tempData = f"""{'%-15s' % data[0]} {'%-9s' % data[1]}  {'%-9s' % data[2]}  {'%-5s' % data[3]}\n"""
+
+            totalLen += 1
+
+            tempData = f"""{'%-2s'%totalLen} {'%-15s' % data[0]} {'%-9s' % data[1]}  {'%-9s' % data[2]}  {'%-5s' % data[3]}\n"""
             returnData += tempData
+
+            if totalLen % 20 == 0:
+                returnData += "```"
+                await ctx.send(returnData)
+                returnData = "```"
+
         returnData += "```"
         await ctx.send(returnData)
         return

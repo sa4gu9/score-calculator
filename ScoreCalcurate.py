@@ -143,7 +143,7 @@ def RunProgram():
     maxpeople = len(scoreminusratio) + 1
 
     for sheetindex in range(sheetamount):
-        time.sleep(30)
+        time.sleep(5)
         nick.clear()
         score.clear()
         winstrike.clear()
@@ -341,7 +341,7 @@ def SaveData(filename, fulldata):
         with open(filename, "w", encoding="UTF-8") as jsonfile:
             json.dump(fulldata, jsonfile, indent=4)
 
-    
+
 def GetMax(rank):
     returnValue = None
     for i in rank:

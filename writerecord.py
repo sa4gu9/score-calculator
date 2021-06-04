@@ -12,7 +12,7 @@ def CheckDigit(temp):
         return False
 
 
-dir = "leaguedata/singles/2019 시즌1"
+dir = "leaguedata/singles/2020 시즌2"
 datalist = os.listdir(dir)
 
 json_file_name = "spreadjson.json"
@@ -26,12 +26,16 @@ scope = [
 credentials = ServiceAccountCredentials.from_json_keyfile_name(json_file_name, scope)
 gc = gspread.authorize(credentials)
 
-spreadsheet_name = "2019카트 시즌1"
+spreadsheet_name = "2020카트 시즌2"
+
+fileindex = 0
 
 for filename in datalist:
 
     file = open(dir + "/" + filename, mode="r", encoding="UTF-8")
+
     data1 = file.readlines()
+    file.close()
 
     for line in data1:
         print(line)
@@ -84,4 +88,6 @@ for filename in datalist:
             sheet.update(f"B{4+index}:R{4+index}", writedata)
 
         index += 1
+
     time.sleep(15)
+    os.remove(dir + "/" + filename)
