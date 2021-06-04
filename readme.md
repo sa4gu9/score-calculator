@@ -6,7 +6,7 @@ Elo 기반 점수 측정으로 객관적인 실력의 정도를 확인 가능<br
 현재 이 프로그램의 가장 큰 문제점<br>
 
 - 팀전을 포함할 경우 점수의 객관성이 떨어짐
-- 점수 인플레이션이 일어남
+- 점수 인플레이션이 너무 심하게 일어남
 
 점수 확인 봇을 킬수 있는 bot.py<br>
 [카트리그 데이터](https://github.com/KartRanking/KartRanking)를 가져오기 위한 writerecord.py<br>

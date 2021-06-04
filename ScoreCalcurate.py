@@ -30,6 +30,9 @@ def GetAllData(filename, sort):
         avgmax = round(alldata[user]["sumMaxrank"] / alldata[user]["totalgame"], 2)
         avgrank = round(alldata[user]["totalrank"] / alldata[user]["totalgame"], 2)
         rankpercent = round((avgrank - 1) / (avgmax - 1) * 100, 2)
+        calpercent = 1 - rankpercent * 0.01
+
+        totalscore = round(alldata[user]["score"] * calpercent, 4)
 
         rank = 0
         for data in ranklist:
