@@ -146,7 +146,8 @@ def RunProgram():
     maxpeople = len(scoreminusratio) + 1
 
     for sheetindex in range(sheetamount):
-        time.sleep(5)
+        time.sleep(3)
+
         nick.clear()
         score.clear()
         winstrike.clear()
