@@ -55,6 +55,7 @@ def InputFilename():
 
 
 fulldata = {}
+trackdata = {}
 
 
 def RunProgram():
@@ -107,6 +108,11 @@ def RunProgram():
 
     if not os.path.isdir(f"data/{tempinput}/"):
         os.mkdir(f"data/{tempinput}/")
+
+    trackdir = f"data/{tempinput}/tracks/"
+
+    if not os.path.isdir(trackdir):
+        os.mkdir(trackdir)
 
     includekillscore = None
 
@@ -226,10 +232,16 @@ def RunProgram():
                 sumscore.append(0)
 
             for i in range(track):
+
+                trackdata.clear()
+                trackfilename = trackdir + track + ".json"
+
+                trackfile = open(trackfile, "r", encoding="UTF-8")
+
                 tempPeople = 0
-                retire = 0
 
                 for j in range(people):
+
                     tempscore[j] = 0
 
                     mapname = sheetvalue[3 + i][1]
@@ -347,17 +359,13 @@ def RunProgram():
                         downpercent,
                     )
 
-                    fulldata[nick[j]]["totalrank"] += rank[j]
-                    fulldata[nick[j]]["sumMaxrank"] += tempPeople
-                    fulldata[nick[j]]["totalgame"] += 1
-                    fulldata[nick[j]]["score"] = round(
-                        fulldata[nick[j]]["score"] + changeScore, 4
-                    )
+                    ChangeStatData(nick[j], "full", changeScore, rank[j], tempPeople)
+
             writeData = ""
             for i in range(people):
                 userdata = fulldata[nick[i]]
-                avgmax = userdata["sumMaxrank"] / userdata["totalgame"]
-                avgrank = userdata["totalrank"] / userdata["totalgame"]
+                avgmax = round(userdata["sumMaxrank"] / userdata["totalgame"], 4)
+                avgrank = round(userdata["totalrank"] / userdata["totalgame"], 4)
 
                 print(
                     f"{nick[i]} : {userdata['score']}P   {userdata['winstrike']}ws {avgrank}/{avgmax}"
@@ -415,3 +423,16 @@ def GetChangeScore(myScore, winScore, loseScore, uppercent, downpercent):
     sdown = abs(myScore - elo.rate_1vs1(loseScore, myScore)[1]) * downpercent
 
     return sup - sdown
+
+
+def ChangeStatData(nickname, mode, changeScore, rank, people):
+    global fulldata
+    global trackdata
+
+    if mode == "full":
+        fulldata[nickname]["totalrank"] += rank
+        fulldata[nickname]["sumMaxrank"] += people
+        fulldata[nickname]["totalgame"] += 1
+        fulldata[nickname]["score"] = round(
+            fulldata[nickname]["score"] + changeScore, 4
+        )
