@@ -16,12 +16,6 @@ sheetname = []
 sheet = None
 
 
-def GetSheetValue(gc, spreadsheet_name, sheetname):
-    sheet = gc.open(spreadsheet_name).worksheet(sheetname)
-    sheetvalue = sheet.get_all_values()
-    return sheetvalue
-
-
 def GetAllData(filename, sort):
     ranklist = []
     with open("data/" + filename, "r", encoding="UTF-8") as f:
@@ -30,9 +24,6 @@ def GetAllData(filename, sort):
         avgmax = round(alldata[user]["sumMaxrank"] / alldata[user]["totalgame"], 2)
         avgrank = round(alldata[user]["totalrank"] / alldata[user]["totalgame"], 2)
         rankpercent = round((avgrank - 1) / (avgmax - 1) * 100, 2)
-        calpercent = 1 - rankpercent * 0.01
-
-        totalscore = round(alldata[user]["score"] * calpercent, 4)
 
         rank = 0
         for data in ranklist:
@@ -50,6 +41,7 @@ def GetAllData(filename, sort):
                 alldata[user]["score"],
                 f"{avgrank}/{avgmax}",
                 rankpercent,
+                alldata[user]["wins"],
             ],
         )
     return ranklist
@@ -87,15 +79,13 @@ def RunProgram():
     sumMaxrank = []
     totalgame = []
 
+    beforeScore = []
+    afterScore = []
+    wins = []
+
     killMode = False
 
     sumbool = False
-
-    print("점수와 순위를 보고싶으면 rank 입력")
-    if input() == "rank":
-        filename = InputFilename()
-        GetAllData(filename)
-        exit()
 
     print("킬포함 점수를 측정하고 싶다면 kill을 입력해주세요.")
     inputdata = input()
@@ -110,7 +100,13 @@ def RunProgram():
         print("누적모드를 적용합니다.")
 
     print("데이터 이름을 입력하세요.")
-    filename = "data/" + input() + ".json"
+    tempinput = input()
+
+    dirname = f"data/{tempinput}/"
+    filename = dirname + tempinput + ".json"
+
+    if not os.path.isdir(f"data/{tempinput}/"):
+        os.mkdir(f"data/{tempinput}/")
 
     includekillscore = None
 
@@ -122,220 +118,270 @@ def RunProgram():
 
     gc = gspread.authorize(credentials)
 
-    print("구글 스프레드시트 이름을 입력해주세요.")
-    spreadsheet_name = input()
+    print("구글 스프레드시트 개수를 입력해주세요.")
+    spreadamount = int(input())
 
-    if sumbool:
-        sheetamount = 1
-    else:
-        print("시트 개수를 입력하세요.")
-        sheetamount = int(input())
+    spreadsheet_name = []
 
-    for aa in range(sheetamount):
-        print("시트이름을 입력해주세요.")
-        sheetname.append(input())
+    for i in range(spreadamount):
+        print("구글 스프레드시트 이름을 입력해주세요.")
+        spreadsheet_name.append(input())
 
-    scoresheet = gc.open(spreadsheet_name).worksheet("킬점수반영시 점수표")
-    includekillscore = scoresheet.range("B2:J11")
+    for name in spreadsheet_name:
+        # 시트리스트 불러오기
+        tempindex = 0
 
-    if os.path.isfile(filename):
-        with open(filename, "r", encoding="UTF-8") as jsonfile:
-            fulldata = json.load(jsonfile)
+        sheetlist = gc.open(name).worksheets()
+        for datasheet in sheetlist:
+            print(f"{tempindex} {datasheet.title}")
+            tempindex += 1
 
-    people = 0
-    maxpeople = len(scoreminusratio) + 1
+        # 시작인덱스 입력
+        print("시작 인덱스를 입력해주세요.")
+        startindex = int(input())
 
-    for sheetindex in range(sheetamount):
-        time.sleep(3)
+        # region
 
-        nick.clear()
-        score.clear()
-        winstrike.clear()
-        bonus.clear()
-        who.clear()
-        rank.clear()
-        team.clear()
-        kill.clear()
-        tempscore.clear()
-        temprank.clear()
-        sumscore.clear()
+        if sumbool:
+            sheetamount = 1
+        else:
+            print("시트 개수를 입력하세요.")
+            sheetamount = int(input())
 
-        totalrank.clear()
-        sumMaxrank.clear()
-        totalgame.clear()
+        scoresheet = sheetlist[0]
+        includekillscore = scoresheet.range("B2:J11")
 
-        sheetvalue = GetSheetValue(gc, spreadsheet_name, sheetname[sheetindex])
+        if os.path.isfile(filename):
+            with open(filename, "r", encoding="UTF-8") as jsonfile:
+                fulldata = json.load(jsonfile)
 
-        people = int(sheetvalue[0][1])
-        track = int(sheetvalue[0][3])
+        people = 0
 
-        for i in range(people):
+        for sheetindex in range(sheetamount):
+            time.sleep(3)
 
-            nickname = sheetvalue[1][2 + i * 2]
-            nick.append(nickname)
+            nick.clear()
+            score.clear()
+            winstrike.clear()
+            bonus.clear()
+            who.clear()
+            rank.clear()
+            team.clear()
+            kill.clear()
+            tempscore.clear()
+            temprank.clear()
+            sumscore.clear()
 
-            if nickname in fulldata.keys():
-                score.append(fulldata[nickname]["score"])
-                winstrike.append(fulldata[nickname]["winstrike"])
+            totalrank.clear()
+            sumMaxrank.clear()
+            totalgame.clear()
 
-                totalrank.append(fulldata[nickname]["totalrank"])
-                sumMaxrank.append(fulldata[nickname]["sumMaxrank"])
-                totalgame.append(fulldata[nickname]["totalgame"])
+            beforeScore.clear()
+            afterScore.clear()
+            wins.clear()
 
-            else:
-                fulldata[nickname] = {
-                    "score": 2000,
-                    "winstrike": 0,
-                    "totalrank": 0,
-                    "sumMaxrank": 0,
-                    "totalgame": 0,
-                }
+            sheetvalue = sheetlist[startindex + sheetindex].get_all_values()
 
-            rank.append(0)
-            bonus.append(0)
-            kill.append(0)
-            tempscore.append(0)
-            temprank.append(0)
-            sumscore.append(0)
+            sheetdir = dirname + name + "/"
 
-        for i in range(track):
-            tempPeople = 0
-            retire = 0
+            print(sheetdir)
 
-            for j in range(people):
-                tempscore[j] = 0
+            if not os.path.isdir(sheetdir):
+                os.mkdir(sheetdir)
 
-                mapname = sheetvalue[3 + i][1]
-                checkrank = sheetvalue[3 + i][2 + j * 2]
-                if not checkrank == "X":
-                    tempPeople += 1
-                    rank[j] = int(checkrank)
-                    temprank[j] = rank[j]
-                    tempindex = 9 * (rank[j] - 1) + (people - 2)
-                    temps = int(includekillscore[tempindex].value)
-                    tempscore[j] += temps
+            people = int(sheetvalue[0][1])
+            track = int(sheetvalue[0][3])
+
+            for i in range(people):
+
+                nickname = sheetvalue[1][2 + i * 2]
+                nick.append(nickname)
+
+                if nickname in fulldata.keys():
+                    score.append(fulldata[nickname]["score"])
+                    winstrike.append(fulldata[nickname]["winstrike"])
+
+                    totalrank.append(fulldata[nickname]["totalrank"])
+                    sumMaxrank.append(fulldata[nickname]["sumMaxrank"])
+                    totalgame.append(fulldata[nickname]["totalgame"])
+
+                    beforeScore.append(fulldata[nickname]["score"])
+
                 else:
-                    rank[j] = "not check"
+                    fulldata[nickname] = {
+                        "score": 2000,
+                        "winstrike": 0,
+                        "totalrank": 0,
+                        "sumMaxrank": 0,
+                        "totalgame": 0,
+                        "wins": 0,
+                    }
+                    beforeScore.append(2000)
 
-                if killMode:
+                rank.append(0)
+                bonus.append(0)
+                kill.append(0)
+                tempscore.append(0)
+                temprank.append(0)
+                sumscore.append(0)
+
+            for i in range(track):
+                tempPeople = 0
+                retire = 0
+
+                for j in range(people):
+                    tempscore[j] = 0
+
+                    mapname = sheetvalue[3 + i][1]
+                    checkrank = sheetvalue[3 + i][2 + j * 2]
+                    if not checkrank == "X":
+                        tempPeople += 1
+                        rank[j] = int(checkrank)
+                        temprank[j] = rank[j]
+                        tempindex = 9 * (rank[j] - 1) + (people - 2)
+                        temps = int(includekillscore[tempindex].value)
+                        tempscore[j] += temps
+                    else:
+                        rank[j] = "not check"
+
+                    if killMode:
+                        if rank[j] == "not check":
+                            continue
+                        else:
+                            kill[j] = int(sheetvalue[3 + i][2 + j * 2])
+
+                        for kk in range(kill[j]):
+                            if kk == 0:
+                                tempscore[j] += int(sheetvalue[27][3])
+                            elif kk == 1:
+                                tempscore[j] += int(sheetvalue[27][4])
+                            else:
+                                tempscore[j] += int(sheetvalue[27][5])
+
+                    sumscore[j] += tempscore[j]
+
+                for j in range(people):
                     if rank[j] == "not check":
                         continue
-                    else:
-                        kill[j] = int(sheetvalue[3 + i][2 + j * 2])
+                    index = -1
+                    rank[j] = 1
 
-                    for kk in range(kill[j]):
-                        if kk == 0:
-                            tempscore[j] += sheetvalue[27][3]
-                        elif kk == 1:
-                            tempscore[j] += sheetvalue[27][4]
-                        else:
-                            tempscore[j] += sheetvalue[27][5]
-
-                sumscore[j] += tempscore[j]
-
-            for j in range(people):
-                if rank[j] == "not check":
-                    continue
-                index = -1
-                rank[j] = 1
-
-                for ss in tempscore:
-                    index += 1
-                    if index == j:
-                        continue
-                    if tempscore[j] < ss:
-                        rank[j] += 1
-                    elif tempscore[j] == ss:
-                        if temprank[j] > temprank[index]:
+                    for ss in tempscore:
+                        index += 1
+                        if index == j:
+                            continue
+                        if tempscore[j] < ss:
                             rank[j] += 1
+                        elif tempscore[j] == ss:
+                            if temprank[j] > temprank[index]:
+                                rank[j] += 1
 
-            print(rank)
+                print(rank)
 
-            for j in range(people):
-                if rank[j] == "not check":
-                    continue
-
-                loseScore = 0.0
-                winScore = 0.0
-                win = 0
-                lose = 0
-
-                for k in range(people):
-                    if rank[k] == "not check":
+                for j in range(people):
+                    if rank[j] == "not check":
                         continue
-                    if rank[j] > rank[k]:
-                        lose = lose + 1
-                        loseScore += fulldata[nick[k]]["score"]
-                    elif rank[j] < rank[k]:
-                        win = win + 1
-                        winScore += fulldata[nick[k]]["score"]
 
-                if lose != 0:
-                    loseScore = loseScore / lose
+                    loseScore = 0.0
+                    winScore = 0.0
+                    win = 0
+                    lose = 0
 
-                if win != 0:
-                    winScore = winScore / win
+                    for k in range(people):
+                        if rank[k] == "not check":
+                            continue
+                        if rank[j] > rank[k]:
+                            lose = lose + 1
+                            loseScore += fulldata[nick[k]]["score"]
+                        elif rank[j] < rank[k]:
+                            win = win + 1
+                            winScore += fulldata[nick[k]]["score"]
 
-                if rank[j] == 1:
-                    fulldata[nick[j]]["winstrike"] += 1
-                else:
-                    fulldata[nick[j]]["winstrike"] = 0
+                    if lose != 0:
+                        loseScore = loseScore / lose
 
-                downpercent = 0
+                    if win != 0:
+                        winScore = winScore / win
 
-                if rank[j] == 1:
-                    downpercent = 0
-                else:
-                    if not rank[j] == GetMax(rank):
-                        if people > 10:
-                            if rank[j] > 10:
-                                downpercent = 1
-                            else:
-                                downpercent = lose * scoreminusratio[9]
-                        else:
-                            downpercent = lose * scoreminusratio[people - 2]
+                    if rank[j] == 1:
+                        fulldata[nick[j]]["winstrike"] += 1
                     else:
-                        downpercent = 1
+                        fulldata[nick[j]]["winstrike"] = 0
 
-                uppercent = 1
+                    downpercent = 0
 
-                if rank[j] == 1:
-                    temp = fulldata[nick[j]]["winstrike"]
-                    strikeBonus = 0
-                    if not temp == 1:
-                        while temp > 0:
-                            strikeBonus += 0.05 * temp
-                            temp = temp - 1
+                    if rank[j] == 1:
 
-                    if tempPeople > 3:
-                        uppercent = 1 + strikeBonus * (tempPeople - 3)
+                        downpercent = 0
+                    else:
+                        if not rank[j] == GetMax(rank):
+                            if people > 10:
+                                if rank[j] > 10:
+                                    downpercent = 1
+                                else:
+                                    downpercent = lose * scoreminusratio[9]
+                            else:
+                                downpercent = lose * scoreminusratio[people - 2]
+                        else:
+                            downpercent = 1
 
-                changeScore = GetChangeScore(
-                    fulldata[nick[j]]["score"],
-                    winScore,
-                    loseScore,
-                    uppercent,
-                    downpercent,
+                    uppercent = 1
+
+                    if rank[j] == 1:
+                        temp = fulldata[nick[j]]["winstrike"]
+                        fulldata[nick[j]]["wins"] += 1
+                        strikeBonus = 0
+                        if not temp == 1:
+                            while temp > 0:
+                                strikeBonus += 0.05 * temp
+                                temp = temp - 1
+
+                        if tempPeople > 3:
+                            uppercent = 1 + strikeBonus * (tempPeople - 3)
+
+                    changeScore = GetChangeScore(
+                        fulldata[nick[j]]["score"],
+                        winScore,
+                        loseScore,
+                        uppercent,
+                        downpercent,
+                    )
+
+                    fulldata[nick[j]]["totalrank"] += rank[j]
+                    fulldata[nick[j]]["sumMaxrank"] += tempPeople
+                    fulldata[nick[j]]["totalgame"] += 1
+                    fulldata[nick[j]]["score"] = round(
+                        fulldata[nick[j]]["score"] + changeScore, 4
+                    )
+            writeData = ""
+            for i in range(people):
+                userdata = fulldata[nick[i]]
+                avgmax = userdata["sumMaxrank"] / userdata["totalgame"]
+                avgrank = userdata["totalrank"] / userdata["totalgame"]
+
+                print(
+                    f"{nick[i]} : {userdata['score']}P   {userdata['winstrike']}ws {avgrank}/{avgmax}"
                 )
+                afterScore.append(userdata["score"])
 
-                fulldata[nick[j]]["totalrank"] += rank[j]
-                fulldata[nick[j]]["sumMaxrank"] += tempPeople
-                fulldata[nick[j]]["totalgame"] += 1
-                fulldata[nick[j]]["score"] = round(
-                    fulldata[nick[j]]["score"] + changeScore, 4
-                )
+                mlpl = ""
+                if afterScore[i] - beforeScore[i] > 0:
+                    mlpl = "+"
+                else:
+                    mlpl = ""
 
-        for i in range(people):
-            userdata = fulldata[nick[i]]
-            avgmax = userdata["sumMaxrank"] / userdata["totalgame"]
-            avgrank = userdata["totalrank"] / userdata["totalgame"]
+                writeData += f"{'%-15s' % nick[i]} {'%-9s' % beforeScore[i]} -> {'%-9s' % afterScore[i]} ({mlpl}{'%-9s' % (round(afterScore[i]-beforeScore[i],4))})\n"
 
-            print(
-                f"{nick[i]} : {userdata['score']}P   {userdata['winstrike']}ws {avgrank}/{avgmax}"
+                if sumbool:
+                    print(sumscore[i])
+            scoreChangeFile = open(
+                f"{sheetdir}{sheetlist[startindex+sheetindex].title} 점수 변화.txt",
+                "w",
             )
+            scoreChangeFile.write(writeData)
+            scoreChangeFile.close()
 
-            if sumbool:
-                print(sumscore[i])
+        # endregion
 
     SaveData(filename, fulldata)
 
@@ -344,6 +390,8 @@ def SaveData(filename, fulldata):
     if input("결과를 저장할려면 yes를 입력") == "yes":
         with open(filename, "w", encoding="UTF-8") as jsonfile:
             json.dump(fulldata, jsonfile, indent=4)
+        return True
+    return False
 
 
 def GetMax(rank):

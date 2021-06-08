@@ -24,21 +24,13 @@ async def 정보(ctx, dataname=None, sort=None, username=None):
 
     if username == None:
         printData = ScoreCalcurate.GetAllData(dataname, sort)
-        scorerank = ScoreCalcurate.GetAllData(dataname, "score")
-        percentrank = ScoreCalcurate.GetAllData(dataname, "avgrank")
 
         totalLen = 0
         returnData = "```"
         for data in printData:
-            totalscore = (
-                len(printData)
-                - scorerank.index(data)
-                + (len(printData) - percentrank.index(data)) * 2
-            )
-
             totalLen += 1
 
-            tempData = f"""{'%-2s'%totalLen} {'%-15s' % data[0]} {'%-9s' % data[1]}  {'%-9s' % data[2]}  {'%-5s' % data[3]}  {'%-2s' % (totalscore)}\n"""
+            tempData = f"""{'%-2s'%totalLen} {'%-15s' % data[0]} {'%-9s' % data[1]}  {'%-9s' % data[2]}  {'%-5s' % data[3]}  {'%-2s' % data[4]}\n"""
             returnData += tempData
 
             if totalLen % 20 == 0:

@@ -6,7 +6,7 @@ from sklearn.linear_model import LinearRegression
 avgrank_list = []
 score = []
 
-jsonfile = open("data/2020officialkart_stat.json", "r")
+jsonfile = open("data/ksdfromdl1.json", "r")
 fulldata = json.load(jsonfile)
 jsonfile.close()
 
@@ -30,7 +30,7 @@ templist = []
 for i in avgrank_list:
     templist.append([i])
 line_filter.fit(templist, score)
-print(line_filter.predict([[100], [10], [1], [0.5], [0.1], [0.05]]))
+print(line_filter.predict([[100], [74], [50], [30], [10], [1]]))
 
 plt.plot(avgrank_list, score, "o")
 plt.gca().invert_xaxis()
